@@ -2,8 +2,6 @@ package com.mindful.friction
 
 import java.util.LinkedList
 import kotlin.math.abs
-<<<<<<< HEAD
-=======
 
 class ScrollTracker {
     private val window = LinkedList<Pair<Long, Int>>()
@@ -47,4 +45,3 @@ class ScrollTracker {
         }
     }
 }
->>>>>>> master
