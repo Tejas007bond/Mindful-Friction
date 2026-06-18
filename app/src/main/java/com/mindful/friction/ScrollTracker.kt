@@ -11,6 +11,10 @@ class ScrollTracker {
     fun updateDataAndGetZombieDuration(deltaY: Int): Long {
         val now = System.currentTimeMillis()
         window.addLast(Pair(now, abs(deltaY)))
+
+        while (window.isNotEmpty() && (now - window.first().first > WINDOW_SIZE_MS)) {
+            window.removeFirst()
+        }
     }
 
 }
