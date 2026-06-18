@@ -4,16 +4,19 @@ plugins {
 
 android {
     namespace = "com.mindful.friction"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+
+    // Set to 36 to match your Android Studio AGP 9.0.0 capabilities
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.mindful.friction"
-        minSdk = 24
+
+        // Min SDK 26 ensures modern haptics API function flawlessly
+        minSdk = 26
+
+        // Match targetSdk to your compile version
         targetSdk = 36
+
         versionCode = 1
         versionName = "1.0"
 

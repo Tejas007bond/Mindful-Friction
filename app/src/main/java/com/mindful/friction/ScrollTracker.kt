@@ -1,46 +1,49 @@
 package com.mindful.friction
 
 import java.util.LinkedList
-import kotlin.math.abs
 
 class ScrollTracker {
-    private val window = LinkedList<Pair<Long, Int>>()
-    private val WINDOW_SIZE_MS = 10000 // Look at a 10-second history window
-    private var zombieStartTimestamp: Long = 0L
+    private val scrollEvents = LinkedList<Long>()
+    private val windowSizeMs = 10_000L
+    private var zombieStartTimestamp = 0L
 
-    fun updateDataAndGetZombieDuration(deltaY: Int): Long {
+    /**
+     * Records scroll activity and returns how long (ms) the user has been in a
+     * steady doomscroll pattern. Works with both pixel deltas and list index steps.
+     */
+    fun updateDataAndGetZombieDuration(activityDelta: Int): Long {
+        if (activityDelta <= 0) {
+            zombieStartTimestamp = 0L
+            return 0L
+        }
+
         val now = System.currentTimeMillis()
-        window.addLast(Pair(now, abs(deltaY)))
+        scrollEvents.addLast(now)
 
-        // 1. Clear out stale data older than our 10-second sliding scale
-        while (window.isNotEmpty() && (now - window.first.first > WINDOW_SIZE_MS)) {
-            window.removeFirst()
+        while (scrollEvents.isNotEmpty() && now - scrollEvents.first() > windowSizeMs) {
+            scrollEvents.removeFirst()
         }
 
-        if (window.size < 8) return 0L
+        if (scrollEvents.size < 4) return 0L
 
-        // 2. Compute Average Velocity (Distance over Time)
-        val totalDistance = window.sumOf { it.second }
-        val timeSpan = window.last.first - window.first.first
-        if (timeSpan <= 0) return 0L
-        val avgVelocity = totalDistance.toDouble() / timeSpan
+        val spanMs = scrollEvents.last() - scrollEvents.first()
+        if (spanMs < 1_500) return 0L
 
-        // 3. Compute Statistical Variance (Speed Consistency)
-        var varianceSum = 0.0
-        for (event in window) {
-            val deviation = avgVelocity - event.second.toDouble()
-            varianceSum += (deviation * deviation)
-        }
-        val variance = varianceSum / window.size
+        val intervals = (1 until scrollEvents.size).map { scrollEvents[it] - scrollEvents[it - 1] }
+        val avgInterval = intervals.average()
+        val intervalVariance = intervals.map { (it - avgInterval) * (it - avgInterval) }.average()
+        val eventsPerSecond = scrollEvents.size.toDouble() / spanMs * 1_000
 
-        // 4. Evaluate: True Zombie scrolling is moderate/high speed WITH near-zero variance
-        val isZombie = avgVelocity > 0.8 && variance < 15.0
+        // Steady feed scrolling: frequent events with a regular rhythm
+        val isZombie = eventsPerSecond >= 1.0 &&
+            avgInterval in 50.0..1_500.0 &&
+            intervalVariance < 200_000
 
         return if (isZombie) {
             if (zombieStartTimestamp == 0L) zombieStartTimestamp = now
-            now - zombieStartTimestamp // Return total milliseconds spent in zombie state
+            now - zombieStartTimestamp
         } else {
-            zombieStartTimestamp = 0L // Instantly reset timeline if they break the uniform pattern
+            zombieStartTimestamp = 0L
             0L
         }
     }

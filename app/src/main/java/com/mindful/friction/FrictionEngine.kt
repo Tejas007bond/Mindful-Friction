@@ -1,19 +1,26 @@
 package com.mindful.friction
 
 import android.content.Context
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.util.Log
 
-class FrictionEngine(private val context: Context, private val onTriggerUI: () -> Unit) {
+class FrictionEngine(
+    context: Context,
+    private val mainHandler: Handler,
+    private val onTriggerUI: () -> Unit
+) {
+    private val appContext = context.applicationContext
 
     private val vibrator: Vibrator by lazy {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (appContext.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
         } else {
             @Suppress("DEPRECATION")
-            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            appContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
     }
 
@@ -23,40 +30,51 @@ class FrictionEngine(private val context: Context, private val onTriggerUI: () -
 
     fun evaluateFrictionLevel(zombieDurationMs: Long) {
         when {
-            // Stage 1: User is zombie-scrolling for 5 seconds -> Execute Subconscious Tap
-            zombieDurationMs in 5000..9999 -> {
+            zombieDurationMs == 0L -> {
+                currentState = FrictionState.CLEAR
+            }
+
+            zombieDurationMs >= OVERLAY_THRESHOLD_MS -> {
+                if (currentState == FrictionState.OVERLAY_TRIGGERED) return
+                if (currentState == FrictionState.CLEAR) triggerSoftHaptic()
+                mainHandler.post(onTriggerUI)
+                currentState = FrictionState.OVERLAY_TRIGGERED
+            }
+
+            zombieDurationMs >= HAPTIC_THRESHOLD_MS -> {
                 if (currentState == FrictionState.CLEAR) {
                     triggerSoftHaptic()
                     currentState = FrictionState.HAPTIC_NUDGE
                 }
             }
-
-            // Scrolled even after the soft nudges for 10+ seconds -> Escalation point
-            zombieDurationMs >= 10000 -> {
-                if (currentState == FrictionState.HAPTIC_NUDGE) {
-                    onTriggerUI()
-                    currentState = FrictionState.OVERLAY_TRIGGERED
-                }
-            }
-
-            // Reset if the pattern breaks
-            zombieDurationMs == 0L -> {
-                currentState = FrictionState.CLEAR
-            }
         }
     }
 
-    private fun triggerSoftHaptic() {
-        if (vibrator.hasVibrator()) {
-            val timings = longArrayOf(0, 40, 80, 40)
-            val amplitudes = intArrayOf(0, 25, 0, 25)
+    fun reset() {
+        currentState = FrictionState.CLEAR
+    }
 
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
+    private fun triggerSoftHaptic() {
+        if (!vibrator.hasVibrator()) return
+
+        val timings = longArrayOf(0, 50, 100, 50)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val amplitudes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                vibrator.hasAmplitudeControl()
+            ) {
+                intArrayOf(0, 120, 0, 120)
             } else {
-                @Suppress("DEPRECIATION")
-                vibrator.vibrate(timings, -1)
+                intArrayOf(0, VibrationEffect.DEFAULT_AMPLITUDE, 0, VibrationEffect.DEFAULT_AMPLITUDE)
             }
+            vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(timings, -1)
         }
+    }
+
+    companion object {
+        private const val HAPTIC_THRESHOLD_MS = 3_000L
+        private const val OVERLAY_THRESHOLD_MS = 6_000L
     }
 }

@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Mindful Friction</string>
+    <string name="accessibility_service_description">Detects repetitive scrolling and gently nudges you to pause.</string>
+    <string name="setup_title">Mindful Friction</string>
+    <string name="setup_description">Enable the accessibility service below, then scroll steadily in any app. You should feel a haptic nudge after ~3 seconds, then see a reminder overlay after ~6 seconds.</string>
+    <string name="enable_accessibility">Enable accessibility service</string>
+    <string name="enable_overlay">Allow display over other apps (optional)</string>
+    <string name="status_ready">All set. Mindful Friction is active.</string>
+    <string name="status_both_needed">Enable the Mindful Friction accessibility service to get started.</string>
+    <string name="status_accessibility_needed">Turn on the Mindful Friction accessibility service.</string>
+    <string name="status_overlay_needed">All set. Overlay permission is optional.</string>
 </resources>
