@@ -46,5 +46,17 @@ class FrictionEngine(private val context: Context, private val onTriggerUI: () -
         }
     }
 
+    private fun triggerSoftHaptic() {
+        if (vibrator.hasVibrator()) {
+            val timings = longArrayOf(0, 40, 80, 40)
+            val amplitudes = intArrayOf(0, 25, 0, 25)
 
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
+            } else {
+                @Suppress("DEPRECIATION")
+                vibrator.vibrate(timings, -1)
+            }
+        }
+    }
 }
