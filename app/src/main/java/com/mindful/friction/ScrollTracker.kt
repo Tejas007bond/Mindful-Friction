@@ -12,12 +12,14 @@ class ScrollTracker {
         val now = System.currentTimeMillis()
         window.addLast(Pair(now, abs(deltaY)))
 
+        // clear out data which is there for more than 10 seconds
         while (window.isNotEmpty() && (now - window.first().first > WINDOW_SIZE_MS)) {
             window.removeFirst()
         }
 
         if (window.size < 8) return 0L
 
+        // Calculate avg velocity
         val totalDistance = window.sumOf { it.second }
         val timeSpan = window.last().first - window.first().first
         if (timeSpan <= 0) return 0L
