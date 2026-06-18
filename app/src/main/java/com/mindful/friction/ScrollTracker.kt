@@ -24,6 +24,14 @@ class ScrollTracker {
         val timeSpan = window.last().first - window.first().first
         if (timeSpan <= 0) return 0L
         val avgVelocity = totalDistance.toDouble() / timeSpan
+
+        //Calculate variance
+        var varianceSum = 0.0
+        for (event in window) {
+            val deviation = avgVelocity - event.second.toDouble()
+            varianceSum += (deviation * deviation)
+        }
+        val variance = varianceSum / window.size
     }
 
 }
