@@ -8,4 +8,9 @@ class ScrollTracker {
     private val WINDOW_SIZE_MS = 10000
     private var zombieStartTimestamp: Long = 0L
 
+    fun updateDataAndGetZombieDuration(deltaY: Int): Long {
+        val now = System.currentTimeMillis()
+        window.addLast(Pair(now, abs(deltaY)))
+    }
+
 }
