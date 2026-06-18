@@ -32,6 +32,19 @@ class ScrollTracker {
             varianceSum += (deviation * deviation)
         }
         val variance = varianceSum / window.size
+
+        // Get a decision : True if scrolling speed is high with near zero variance
+        val isZombie = avgVelocity > 0.8 && variance < 15.0
+
+        return if (isZombie) {
+            if (zombieStartTimestamp == 0L) zombieStartTimestamp = now
+            now - zombieStartTimestamp // Return total millisecond in zombie state
+        } else {
+            zombieStartTimestamp = 0L // Instantly reset timeline if they break the uniform pattern
+            0L
+        }
+
+
     }
 
 }
