@@ -30,7 +30,21 @@ class FrictionEngine(private val context: Context, private val onTriggerUI: () -
                     currentState = FrictionState.HAPTIC_NUDGE
                 }
             }
+
+            // Scrolled even after the soft nudges for 10+ seconds -> Escalation point
+            zombieDurationMs >= 10000 -> {
+                if (currentState == FrictionState.HAPTIC_NUDGE) {
+                    onTriggerUI()
+                    currentState = FrictionState.OVERLAY_TRIGGERED
+                }
+            }
+
+            // Reset if the pattern breaks
+            zombieDurationMs == 0L -> {
+                currentState = FrictionState.CLEAR
+            }
         }
     }
+
 
 }
