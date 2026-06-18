@@ -15,4 +15,18 @@ class FrictionEngine(private val context: Context, private val onTriggerUI: () -
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
     }
+
+    enum class FrictionState { Clear, HAPTIC_NUDGE, OVERLAY_TRIGGERED }
+
+    private var currentState = FrictionState.Clear
+
+    fun evaluateFrictionLevel(zombieDurationMs: Long) {
+        when {
+            zombieDurationMs in 5000..9999 -> {
+                if (currentState == FrictionState.Clear) {
+
+                }
+            }
+        }
+    }
 }
