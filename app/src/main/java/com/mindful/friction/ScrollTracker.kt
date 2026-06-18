@@ -15,6 +15,13 @@ class ScrollTracker {
         while (window.isNotEmpty() && (now - window.first().first > WINDOW_SIZE_MS)) {
             window.removeFirst()
         }
+
+        if (window.size < 8) return 0L
+
+        val totalDistance = window.sumOf { it.second }
+        val timeSpan = window.last().first - window.first().first
+        if (timeSpan <= 0) return 0L
+        val avgVelocity = totalDistance.toDouble() / timeSpan
     }
 
 }
