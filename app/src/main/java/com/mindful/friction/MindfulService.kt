@@ -1,5 +1,6 @@
 package com.mindful.friction
 
+import com.mindful.friction.R
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.graphics.PixelFormat
@@ -44,7 +45,7 @@ class MindfulService : AccessibilityService() {
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_FOCUSABLE,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.BOTTOM
