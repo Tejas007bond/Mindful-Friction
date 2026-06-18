@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#F4F4F6"
+    android:elevation="12dp"
+    android:orientation="vertical"
+    android:padding="24dp"
+>
+
+    <TextView
+        android:id="@+id/promptTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="You've been scrolling for a bit. Take a breath—are you looking for something specific, or just drifting?"
+        android:textColor="#212121"
+        android:textSize="16sp"
+        android:fontFamily="sans-serif-medium"
+        android:lineSpacingMultiplier="1.2"
+    />
+
+    <Button
+        android:id="@+id/dismissButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="16dp"
+        android:text="Resume with intent"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#4A4A4A"
+        android:textAllCaps="false"
+    />
+</LinearLayout>
