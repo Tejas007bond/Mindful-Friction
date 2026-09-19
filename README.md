@@ -1,107 +1,153 @@
-Here is the full code for the README.md file so you can copy and paste it directly.
-
-Markdown
 # Mindful Friction
 
-Mindful Friction is a browser extension and productivity tool designed to reduce compulsive habits and mindless web browsing. Instead of abruptly blocking access to websites, the application introduces intentional, gentle friction (such as short pause timers, reflection prompts, or intentional interaction requirements) to encourage conscious digital habits and mindful web navigation.
+Mindful Friction is a native Android app that adds gentle friction to compulsive
+doomscrolling. Instead of blocking apps outright, it watches for the steady,
+rhythmic scroll pattern of a mindless feed and escalates in two stages: a subtle
+haptic nudge first, then a reminder overlay you can dismiss.
 
----
+Everything runs on-device. There is no networking, no analytics, and no browsing
+data leaves the phone.
 
-## Features
+## How it works
 
-* **Intentional Delays**: Introduces customizable pauses before opening distracting or targeted websites.
-* **Reflection Prompts**: Asks users to confirm their intent or state a quick reason before granting access to specific URLs.
-* **Custom Rules & Site Lists**: Configure tailored rules, target sites, and custom friction levels depending on personal productivity requirements.
-* **Minimalist Interface**: Clean, accessible, and lightweight design that integrates seamlessly into the browser workflow.
-* **Privacy Focused**: Operates locally within the browser without tracking, logging, or sending browsing activity to external servers.
+The app is a single `AccessibilityService` that listens for scroll and
+window-change events system-wide.
 
----
+1. **`ScrollTracker`** records scroll events and returns how long the user has
+   been in a sustained doomscroll. It keeps a 10-second sliding window of event
+   timestamps and calls the pattern a "zombie" scroll when the burst is long
+   enough and regular enough:
 
-## Project Structure
+   - at least 4 events in the window,
+   - spanning at least 1.5 seconds,
+   - at least 1 event per second,
+   - average gap between consecutive events between 50 ms and 1.5 s,
+   - interval variance below 200,000 (i.e. a *steady* rhythm, not paging around).
 
+   A quiet gap longer than ~2 seconds or a switch to another app clears the run
+   so the next burst starts a fresh timer.
+
+2. **`FrictionEngine`** maps that elapsed zombie time onto a graduated response:
+
+   | Zombie duration | Response |
+   | --- | --- |
+   | ≥ 3 s | Soft two-pulse haptic nudge (amplitude only where the device supports it) |
+   | ≥ 6 s | A dismissible reminder overlay appears at the bottom of the screen |
+
+   Dismissing the overlay, or switching apps, resets the meter to zero.
+
+## Project structure
+
+```
 Mindful-Friction/
-├── assets/          # Static assets (icons, images, styles)
-├── src/             # Core application code
-│   ├── background/  # Background scripts and event handling
-│   ├── content/     # Content scripts injected into targeted pages
-│   ├── popup/       # Interface logic and view files
-│   └── options/     # Settings and configuration management
-├── manifest.json    # Extension configuration file
-├── package.json     # Node.js dependencies and build configurations
-└── README.md        # Documentation
+├── app/
+│   ├── build.gradle.kts                 # module config (compileSdk 36, minSdk 26)
+│   └── src/
+│       ├── main/
+│       │   ├── AndroidManifest.xml      # permissions, service registration
+│       │   ├── java/com/mindful/friction/
+│       │   │   ├── MainActivity.kt      # setup screen, status, permission buttons
+│       │   │   ├── MindfulService.kt    # accessibility service, event handling, overlay
+│       │   │   ├── ScrollTracker.kt     # doomscroll detection
+│       │   │   └── FrictionEngine.kt    # haptic / overlay escalation
+│       │   └── res/
+│       │       ├── layout/              # activity_main, overlay_mindful_friction
+│       │       ├── values/              # strings, themes, colors
+│       │       └── xml/                 # accessibility_service_config
+│       ├── test/                        # local JVM unit tests
+│       └── androidTest/                 # instrumented on-device tests
+├── gradle/libs.versions.toml            # dependency + plugin version catalog
+├── gradlew / gradlew.bat                # Gradle wrapper (9.2.1)
+├── settings.gradle.kts
+└── build.gradle.kts
+```
 
+## Requirements
 
----
+- **Android Studio** (or a standalone Android SDK install)
+- **JDK 17+** (required by AGP 9.0)
+- **Android SDK Platform 36** and build tools (matching `compileSdk = 36`)
+- A device or emulator running **Android 8.0 (API 26) or newer**
 
-## Installation and Local Setup
+No Node.js, npm, or browser is involved.
 
-### Prerequisites
+## Build and install
 
-* Node.js (version 16.x or higher)
-* npm, yarn, or pnpm
-* Google Chrome, Brave, Edge, or any Chromium-based browser
-
-### Clone the Repository
+Clone the repository and use the Gradle wrapper:
 
 ```bash
-git clone [https://github.com/Tejas007bond/Mindful-Friction.git](https://github.com/Tejas007bond/Mindful-Friction.git)
+git clone https://github.com/Tejas007bond/Mindful-Friction.git
 cd Mindful-Friction
-Install Dependencies
-Bash
-npm install
-Build the Project
-Run the build command to generate the production extension bundle:
 
-Bash
-npm run build
-Loading the Extension into Browser
-Open your Chromium-based web browser (e.g., Google Chrome).
+# Compile the debug APK
+./gradlew :app:assembleDebug
 
-Navigate to chrome://extensions/ in the address bar.
+# Build and install onto a connected device/emulator
+./gradlew :app:installDebug
+```
 
-Enable Developer mode using the toggle switch in the top-right corner.
+On Windows, use `gradlew.bat` in place of `./gradlew`. You can also simply open
+the project folder in Android Studio and press **Run**.
 
-Click on the Load unpacked button in the top-left area.
+## Enabling the service
 
-Select the build output directory (dist or the root project folder containing manifest.json).
+The app does nothing until the accessibility service is switched on.
 
-The Mindful Friction extension will now appear in your browser toolbar.
+1. Launch **Mindful Friction** from the app drawer.
+2. Tap **Enable accessibility service**. This opens the system Accessibility
+   settings; select *Mindful Friction* and turn it on.
+3. Return to the app: the status line should read *"All set. Mindful Friction
+   is active."*
+4. Optionally tap **Allow display over other apps**. The reminder is drawn as an
+   accessibility overlay (`TYPE_ACCESSIBILITY_OVERLAY`), so it works from the
+   accessibility service alone; this button grants the separate
+   `SYSTEM_ALERT_WINDOW` permission for the edge cases where that helps.
 
-Usage Guide
-Click on the Mindful Friction extension icon in your browser toolbar.
+## Usage
 
-Open the Settings / Options panel to manage site configurations.
+Open any app with a scrolling feed and scroll steadily. After roughly three
+seconds of continuous scrolling you should feel the haptic nudge; after roughly
+six seconds a reminder overlay appears near the bottom of the screen with a
+**Resume with intent** button. Tapping it clears the timer and starts the cycle
+over.
 
-Add domain names or patterns for websites you frequently visit mindlessly (e.g., social media platforms, entertainment sites).
+Behavior is tuned by two sets of constants if you want to experiment:
 
-Select the friction type:
+- detection sensitivity: `windowSizeMs`, `idleGapMs`, the `isZombie` thresholds
+  in `ScrollTracker.kt`
+- response timing: `HAPTIC_THRESHOLD_MS` and `OVERLAY_THRESHOLD_MS` in
+  `FrictionEngine.kt`
 
-Pause Timer: Wait a specified number of seconds before page entry.
+## Testing and linting
 
-Intention Prompt: Type a short reason for visiting the site before proceeding.
+```bash
+# JVM unit tests
+./gradlew :app:testDebugUnitTest
 
-Save your preferences. Whenever a restricted site is opened, the configured friction screen will intercept access.
+# Instrumented tests (requires a connected device or emulator)
+./gradlew :app:connectedAndroidTest
 
-Development
-To start local development with hot-reloading enabled:
+# Android Lint
+./gradlew :app:lintDebug
+```
 
-Bash
-npm run dev
-Running Tests
-Bash
-npm run test
-Contributing
-Contributions are welcome. Follow these steps to submit changes:
+## Privacy
 
-Fork the repository.
+All detection happens locally inside the accessibility service, using only the
+scroll event metadata the system delivers (scroll offsets and list indices).
+Nothing is persisted and nothing is transmitted off the device. Although the
+service is declared with window-content access so it can receive events, the
+code never reads on-screen text or view content.
 
-Create a new branch (git checkout -b feature/your-feature-name).
+## Contributing
 
-Commit your changes (git commit -m "Add new feature").
+1. Fork the repository.
+2. Create a branch: `git checkout -b feature/your-feature-name`.
+3. Make your changes and run the build plus the unit tests above.
+4. Commit and push to your branch.
+5. Open a pull request describing the change.
 
-Push to the branch (git push origin feature/your-feature-name).
+## License
 
-Open a Pull Request with a clear description of your modifications.
-
-License
-This project is licensed under the MIT License. See the LICENSE file for full details.
+No license file is currently included in this repository. Until one is added,
+all rights are reserved by the author.
