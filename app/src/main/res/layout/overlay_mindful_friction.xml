@@ -13,7 +13,7 @@
         android:id="@+id/promptTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="You've been scrolling for a bit. Take a breath—are you looking for something specific, or just drifting?"
+        android:text="You've been scrolling for a bit. Take a breath. Are you looking for something specific, or just drifting?"
         android:textColor="#212121"
         android:textSize="16sp"
         android:fontFamily="sans-serif-medium"
