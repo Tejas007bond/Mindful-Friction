@@ -2,7 +2,10 @@ package com.mindful.friction
 
 import java.util.LinkedList
 
-class ScrollTracker {
+class ScrollTracker(
+    /** Time source, injectable so tests can drive it deterministically. */
+    private val now: () -> Long = System::currentTimeMillis
+) {
     private val scrollEvents = LinkedList<Long>()
     private val windowSizeMs = 10_000L
 
@@ -22,19 +25,19 @@ class ScrollTracker {
             return 0L
         }
 
-        val now = System.currentTimeMillis()
+        val timestamp = now()
 
         // A long gap means the user stopped scrolling. Drop the previous run so
         // the next burst starts a fresh timer instead of inheriting the paused
         // time, which fired the haptic nudge and overlay the moment they resumed.
-        if (lastEventTimestamp != 0L && now - lastEventTimestamp > idleGapMs) {
+        if (lastEventTimestamp != 0L && timestamp - lastEventTimestamp > idleGapMs) {
             reset()
         }
-        lastEventTimestamp = now
+        lastEventTimestamp = timestamp
 
-        scrollEvents.addLast(now)
+        scrollEvents.addLast(timestamp)
 
-        while (scrollEvents.isNotEmpty() && now - scrollEvents.first() > windowSizeMs) {
+        while (scrollEvents.isNotEmpty() && timestamp - scrollEvents.first() > windowSizeMs) {
             scrollEvents.removeFirst()
         }
 
@@ -64,8 +67,8 @@ class ScrollTracker {
             return 0L
         }
 
-        if (zombieStartTimestamp == 0L) zombieStartTimestamp = now
-        return now - zombieStartTimestamp
+        if (zombieStartTimestamp == 0L) zombieStartTimestamp = timestamp
+        return timestamp - zombieStartTimestamp
     }
 
     /** Drops all tracking state, e.g. when the user stops scrolling or changes app. */
