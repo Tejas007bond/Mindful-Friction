@@ -57,20 +57,14 @@ class FrictionEngine(
     private fun triggerSoftHaptic() {
         if (!vibrator.hasVibrator()) return
 
+        // minSdk is 26, so VibrationEffect is always available here.
         val timings = longArrayOf(0, 50, 100, 50)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val amplitudes = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                vibrator.hasAmplitudeControl()
-            ) {
-                intArrayOf(0, 120, 0, 120)
-            } else {
-                intArrayOf(0, VibrationEffect.DEFAULT_AMPLITUDE, 0, VibrationEffect.DEFAULT_AMPLITUDE)
-            }
-            vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
+        val amplitudes = if (vibrator.hasAmplitudeControl()) {
+            intArrayOf(0, 120, 0, 120)
         } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(timings, -1)
+            intArrayOf(0, VibrationEffect.DEFAULT_AMPLITUDE, 0, VibrationEffect.DEFAULT_AMPLITUDE)
         }
+        vibrator.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
     }
 
     companion object {

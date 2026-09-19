@@ -1,6 +1,5 @@
 package com.mindful.friction
 
-import com.mindful.friction.R
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.graphics.PixelFormat
