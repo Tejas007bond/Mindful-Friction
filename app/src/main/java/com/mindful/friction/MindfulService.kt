@@ -78,6 +78,7 @@ class MindfulService : AccessibilityService() {
         lastScrollY = -1
         lastFromIndex = -1
         lastToIndex = -1
+        scrollTracker.reset()
         frictionEngine.reset()
     }
 
